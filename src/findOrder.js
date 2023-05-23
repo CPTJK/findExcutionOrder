@@ -1,23 +1,26 @@
-import readline from "readline";
-
-function findOrder (tasks, dependencies){
+function findOrder(tasks, dependencies) {
+  // 总体思路: 有向无环图(DAG)拓扑排序
+  // ->incomingEdges(进入的边)   outgoingEdges-> (出去的边)
   const incomingEdges = new Map(), outgoingEdges = new Map();
+  // 初始化
   tasks.forEach((task) => {
     incomingEdges.set(task, new Set());
     outgoingEdges.set(task, new Set());
   })
-  for (const [dependent, dependency] of dependencies) { // dependency -> dependent
+  // 构建有向图
+  for (const [dependent, dependency] of dependencies) {
+    // dependency(被依赖者) -> dependent(依赖于他人的)
     incomingEdges.get(dependent).add(dependency);
     outgoingEdges.get(dependency).add(dependent);
   }
-  const queue = [];
+  const queue = []; //队列,先进先出
   for (const [task, dependencySet] of incomingEdges.entries()) {
-    if (dependencySet.size === 0) { // 入度为0
+    if (dependencySet.size === 0) { // 入度为 0
       queue.push(task);
     }
   }
   const orderedTasks = [];
-  while(queue.length > 0) {
+  while (queue.length > 0) {
     const task = queue.shift();
     orderedTasks.push(task);
     for (const dependent of outgoingEdges.get(task)) {
@@ -29,29 +32,13 @@ function findOrder (tasks, dependencies){
   }
   if (orderedTasks.length === tasks.length) {
     return orderedTasks;
-  }else{
+  } else { // 有向图里面有环, 无法排序
     console.log('任务无法排序')
+    return [];
   }
 }
-
-let tasks, dependencies;
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-rl.question('tasks:', _tasks => {
-  console.log(`tasks: ${_tasks}`);
-  tasks = _tasks.split(',');
-  rl.question('dependencies:', _dependencies => {
-    console.log(`dependencies: ${_dependencies}`);
-    dependencies = JSON.parse(_dependencies)
-    console.log(findOrder(tasks, dependencies));
-    rl.close();
-  })
-  
-});
-
-// console.log(tasks, dependencies);
-// const res = findOrder(['A','B','C'],[['B','A'],['C','A'],['B','C']]);
-// console.log(res);
+export default findOrder;
+// test
+// console.log(findOrder(['A', 'B', 'C'], [['B', 'A'], ['C', 'A'], ['B', 'C']]));
+// console.log(findOrder(['A', 'B', 'C', 'D'], [['B', 'A'], ['C', 'A'], ['B', 'C'], ['A', 'D']]));
+// console.log(findOrder(['A', 'B', 'C', 'D'], [['B', 'A'], ['C', 'A'], ['B', 'C'], ['A', 'D'], ['D', 'B']]));
